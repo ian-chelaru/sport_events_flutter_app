@@ -3,9 +3,10 @@ import '../model/event.dart';
 
 class EventCard extends StatelessWidget {
   final Event event;
+  final Function update;
   final Function delete;
 
-  EventCard({this.event, this.delete});
+  EventCard({this.event, this.update, this.delete});
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +37,7 @@ class EventCard extends StatelessWidget {
             Row(
               children: <Widget>[
                 FlatButton.icon(
-                    onPressed: () {}, icon: Icon(Icons.edit), label: Text("")),
+                    onPressed: update, icon: Icon(Icons.edit), label: Text("")),
                 FlatButton.icon(
                     onPressed: delete,
                     icon: Icon(Icons.delete),
