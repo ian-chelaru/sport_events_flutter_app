@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sport_events_app/pages/add_event.dart';
 import '../model/event.dart';
 import '../widgets/event_card.dart';
+import 'package:sport_events_app/dao/event_dao.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -9,23 +10,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<Event> events = [
-    Event(
-        name: "Cycling",
-        location: "Location1",
-        startTime: TimeOfDay(hour: 16, minute: 0),
-        endTime: TimeOfDay(hour: 17, minute: 0)),
-    Event(
-        name: "Football",
-        location: "Location2",
-        startTime: TimeOfDay(hour: 20, minute: 30),
-        endTime: TimeOfDay(hour: 22, minute: 0)),
-    Event(
-        name: "Basketball",
-        location: "Location3",
-        startTime: TimeOfDay(hour: 8, minute: 15),
-        endTime: TimeOfDay(hour: 9, minute: 0))
-  ];
+  EventDao eventDao = EventDao();
+
+  List<Event> events;
 
   Event defaultEvent = Event(
       name: "Sport0",
@@ -35,6 +22,11 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (events == null) {
+      events = List<Event>();
+      _getAllEvents();
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text('SportEventsApp'),
@@ -46,9 +38,12 @@ class _HomePageState extends State<HomePage> {
                 event: event,
                 update: () async {
                   Event updatedEvent = await _navigateToAddEventPage(event);
+                  updatedEvent.id = event.id;
+                  await eventDao.updateEvent(updatedEvent);
                   _updateEvent(event, updatedEvent);
                 },
-                delete: () {
+                delete: () async {
+                  await eventDao.deleteEvent(event.id);
                   _deleteEvent(event);
                 }))
             .toList(),
@@ -56,6 +51,7 @@ class _HomePageState extends State<HomePage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           Event newEvent = await _navigateToAddEventPage(defaultEvent);
+          await eventDao.insertEvent(newEvent);
           _addEvent(newEvent);
         },
         child: Icon(Icons.add),
@@ -93,6 +89,13 @@ class _HomePageState extends State<HomePage> {
   void _deleteEvent(event) {
     setState(() {
       events.remove(event);
+    });
+  }
+
+  void _getAllEvents() async {
+    List<Event> events = await eventDao.getEvents();
+    setState(() {
+      this.events = events;
     });
   }
 }

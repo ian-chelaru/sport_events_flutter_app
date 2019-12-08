@@ -14,8 +14,8 @@ class Event {
       "id": id,
       "name": name,
       "location": location,
-      "start_time": startTime,
-      "end_time": endTime,
+      "start_time": startTime.toString().substring(10, 15),
+      "end_time": endTime.toString().substring(10, 15),
     };
   }
 }

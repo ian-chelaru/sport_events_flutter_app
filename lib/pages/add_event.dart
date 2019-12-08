@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sport_events_app/model/event.dart';
+import 'package:sport_events_app/util/converters.dart';
 
 class AddEventPage extends StatefulWidget {
   final Event event;
@@ -94,14 +95,8 @@ class _AddEventPageState extends State<AddEventPage> {
     return Event(
       name: nameController.text,
       location: locationController.text,
-      startTime: _convertStringToTimeOfDay(startTimeController.text),
-      endTime: _convertStringToTimeOfDay(endTimeController.text),
+      startTime: convertStringToTimeOfDay(startTimeController.text),
+      endTime: convertStringToTimeOfDay(endTimeController.text),
     );
-  }
-
-  TimeOfDay _convertStringToTimeOfDay(String time) {
-    int hour = int.parse(time.substring(0, 2));
-    int minute = int.parse(time.substring(3));
-    return TimeOfDay(hour: hour, minute: minute);
   }
 }

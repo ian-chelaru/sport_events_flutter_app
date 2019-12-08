@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:sport_events_app/model/event.dart';
 import 'package:sport_events_app/dao/db_connection.dart';
+import 'package:sport_events_app/util/converters.dart';
 
 class EventDao {
   Future<void> insertEvent(Event event) async {
@@ -23,8 +24,8 @@ class EventDao {
         id: maps[i]['id'],
         name: maps[i]['name'],
         location: maps[i]['location'],
-        startTime: maps[i]['start_time'],
-        endTime: maps[i]['end_time'],
+        startTime: convertStringToTimeOfDay(maps[i]['start_time']),
+        endTime: convertStringToTimeOfDay(maps[i]['end_time']),
       );
     });
   }
