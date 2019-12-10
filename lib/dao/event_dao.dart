@@ -52,4 +52,10 @@ class EventDao {
       whereArgs: [id],
     );
   }
+
+  Future<void> deleteAllEvents() async {
+    final Database db = await DatabaseConnection().database;
+
+    await db.execute("delete from events");
+  }
 }

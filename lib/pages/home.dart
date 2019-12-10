@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:sport_events_app/pages/add_event.dart';
+import 'package:sport_events_app/rest/event_service.dart';
 import '../model/event.dart';
 import '../widgets/event_card.dart';
 import 'package:sport_events_app/dao/event_dao.dart';
+import 'package:toast/toast.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -11,6 +13,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   EventDao eventDao = EventDao();
+  EventService eventService = EventService();
 
   List<Event> events;
 
@@ -21,12 +24,15 @@ class _HomePageState extends State<HomePage> {
       endTime: TimeOfDay(hour: 0, minute: 0));
 
   @override
-  Widget build(BuildContext context) {
-    if (events == null) {
-      events = List<Event>();
-      _getAllEvents();
-    }
+  void initState() {
+    super.initState();
+    events = List<Event>();
+    _getAllEvents();
+//    Future<List<Event>> eventList = eventService.getAllEvents();
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('SportEventsApp'),
@@ -38,12 +44,9 @@ class _HomePageState extends State<HomePage> {
                 event: event,
                 update: () async {
                   Event updatedEvent = await _navigateToAddEventPage(event);
-                  updatedEvent.id = event.id;
-                  await eventDao.updateEvent(updatedEvent);
                   _updateEvent(event, updatedEvent);
                 },
                 delete: () async {
-                  await eventDao.deleteEvent(event.id);
                   _deleteEvent(event);
                 }))
             .toList(),
@@ -51,7 +54,6 @@ class _HomePageState extends State<HomePage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           Event newEvent = await _navigateToAddEventPage(defaultEvent);
-          await eventDao.insertEvent(newEvent);
           _addEvent(newEvent);
         },
         child: Icon(Icons.add),
@@ -67,35 +69,69 @@ class _HomePageState extends State<HomePage> {
         ));
   }
 
-  void _addEvent(event) {
+  void _addEvent(event) async {
     if (event != null) {
+      try {
+        event = await eventService.insertEvent(event);
+      } catch (e) {
+        _showToast("No internet connection. Data persisted locally.");
+      }
+      eventDao.insertEvent(event);
       setState(() {
         events.add(event);
       });
     }
   }
 
-  void _updateEvent(Event oldEvent, Event newEvent) {
+  void _updateEvent(Event oldEvent, Event newEvent) async {
     if (newEvent != null) {
-      setState(() {
-        oldEvent.name = newEvent.name;
-        oldEvent.location = newEvent.location;
-        oldEvent.startTime = newEvent.startTime;
-        oldEvent.endTime = newEvent.endTime;
-      });
+      newEvent.id = oldEvent.id;
+      try {
+        await eventService.updateEvent(newEvent);
+        eventDao.updateEvent(newEvent);
+        setState(() {
+          oldEvent.name = newEvent.name;
+          oldEvent.location = newEvent.location;
+          oldEvent.startTime = newEvent.startTime;
+          oldEvent.endTime = newEvent.endTime;
+        });
+      } catch (e) {
+        _showToast("No internet connection. Update operation not available.");
+      }
     }
   }
 
-  void _deleteEvent(event) {
-    setState(() {
-      events.remove(event);
-    });
+  void _deleteEvent(event) async {
+    try {
+      await eventService.deleteEvent(event.id);
+      eventDao.deleteEvent(event.id);
+      setState(() {
+        events.remove(event);
+      });
+    } catch (e) {
+      _showToast("No internet connection. Delete operation not available.");
+    }
   }
 
   void _getAllEvents() async {
-    List<Event> events = await eventDao.getEvents();
+    List<Event> events;
+    try {
+      events = await eventService.getAllEvents();
+      await eventDao.deleteAllEvents();
+      for (var event in events) {
+        await eventDao.insertEvent(event);
+      }
+    } catch (e) {
+      events = await eventDao.getEvents();
+      _showToast("No internet connection. Local data displayed.");
+    }
     setState(() {
       this.events = events;
     });
+  }
+
+  void _showToast(String message) {
+    Toast.show(message, context,
+        duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
   }
 }
